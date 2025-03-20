@@ -11,9 +11,9 @@ async function seedDataBase() {
         if (users === 0) {
             // hashing the paswords of the hard coded users
             const hashedPasswords = await Promise.all([
-                bcrypt.hash("123456789", 10),
-                bcrypt.hash("123456789", 10),
-                bcrypt.hash("123456789", 10)
+                bcrypt.hash(process.env.PASSWORD, 10),
+                bcrypt.hash(process.env.PASSWORD, 10),
+                bcrypt.hash(process.env.PASSWORD, 10)
             ]);
 
             await User.insertMany([
