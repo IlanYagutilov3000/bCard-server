@@ -8,12 +8,15 @@ This API is designed to work with the Bcard frontend application.
 Resources
 
 When the database is empty, the API will seed the following initial data on the first run:
+
 Users:
+
 1. Regular user
 2. Business user
 3. Admin user
 
 Business Cards:
+
 Three sample business cards will also be seeded.
 
 Routes
