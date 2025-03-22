@@ -58,7 +58,7 @@ DELETE /users/:id
 3. Install dependencies:
    ```md
    npm install
-5. If I send you the project .env was send as well I didn't send you the project please create a .env file.
+5. If I send you the project `.env` was send as well I didn't send you the project please create a `.env` file.
 6. Start the server:
    ```md
    nodemon index
