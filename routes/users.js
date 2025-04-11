@@ -9,26 +9,26 @@ const auth = require("../middlewares/auth");
 const isAdminOrUser = require("../middlewares/isAdminOrUser");
 
 const userSchema = Joi.object({
-    name: {
+    name: Joi.object({
         first: Joi.string().required().min(2),
         middle: Joi.string().optional().allow(""),
         last: Joi.string().required().min(2),
-    },
+    }),
     phone: Joi.string().required().pattern(/^(?:\+972|0)([23489]|5[0123456789])\d{7}$/).min(9).max(11),
     email: Joi.string().required().min(2).email(),
     password: Joi.string().required().min(7),
-    image: {
+    image: Joi.object({
         url: Joi.string().uri(),
         alt: Joi.string().required().min(2)
-    },
-    address: {
+    }),
+    address: Joi.object({
         state: Joi.string().optional().allow(""),
         country: Joi.string().required().min(2),
         city: Joi.string().required().min(2),
         street: Joi.string().required().min(2),
         houseNumber: Joi.number().required().min(2),
         zip: Joi.number().required().min(2),
-    },
+    }),
     isAdmin: Joi.boolean(),
     isBusiness: Joi.boolean()
 });
@@ -37,35 +37,35 @@ const loginSchema = Joi.object({
     email: Joi.string().required().min(2).email(),
     password: Joi.string().required().min(8)
 });
-// schema for editing the user not sending here the password
+
+// schema for editing the user, not sending here the password
 const editUserSchema = Joi.object({
-    name: {
+    name: Joi.object({
         first: Joi.string().required().min(2),
         middle: Joi.string().optional().allow(""),
         last: Joi.string().required().min(2),
-    },
+    }),
     phone: Joi.string().required().pattern(/^(?:\+972|0)([23489]|5[0123456789])\d{7}$/).min(9).max(11),
     email: Joi.string().required().min(2).email(),
-    image: {
+    image: Joi.object({
         url: Joi.string().uri(),
         alt: Joi.string().required().min(2)
-    },
-    address: {
+    }),
+    address: Joi.object({
         state: Joi.string().optional().allow(""),
         country: Joi.string().required().min(2),
         city: Joi.string().required().min(2),
         street: Joi.string().required().min(2),
         houseNumber: Joi.number().required().min(2),
         zip: Joi.number().required().min(2),
-    },
+    }),
 });
 
-// register (this is done remove this comment later)
+// register
 router.post("/", async (req, res) => {
     try {
-        // when you finish the project place here await to all of the error message remvoed it because we can't see the message with validateasync, dont forget
         // validate body
-        const { error } = userSchema.validate(req.body)
+        const { error } = await userSchema.validateAsync(req.body)
         if (error) return res.status(400).send(error.details[0].message)
         // check if user exits
         let user = await User.findOne({ email: req.body.email });
@@ -77,7 +77,7 @@ router.post("/", async (req, res) => {
         user.password = await bcrypt.hash(user.password, salt)
         await user.save()
 
-        const userDetails = await User.findById(user._id).select("-isAdmin -__v -address.zip -createdAt -failedAttempts -lockUntil -name._id -address._id -image._id ");
+        const userDetails = await User.findById(user._id).select("-isAdmin -__v -address.zip -createdAt -failedAttempts -lockUntil -name._id -address._id -image._id -_id ");
 
         res.status(201).send(userDetails)
     } catch (error) {
@@ -85,11 +85,11 @@ router.post("/", async (req, res) => {
     }
 });
 
-// login(done but may need a few changes later + we need to add the bonus to it )
+// login
 router.post("/login", async (req, res) => {
     try {
         // validate body
-        const { error } = loginSchema.validate(req.body)
+        const { error } = await loginSchema.validateAsync(req.body)
         if (error) return res.status(400).send(error.details[0].message)
         // check if user exist
         const user = await User.findOne({ email: req.body.email })
@@ -108,8 +108,8 @@ router.post("/login", async (req, res) => {
             return res.status(404).send("Invalid email or passqord");
         }
         // reseting the lockUntil to null baisicly nothing and the faled attempts to zero
-        user.failedAttempts = 0; // Reset failed attempts
-        user.lockUntil = null; // Remove lock
+        user.failedAttempts = 0;
+        user.lockUntil = null;
         await user.save();
         //send token
         const token = jwt.sign({ _id: user._id, isBusiness: user.isBusiness, isAdmin: user.isAdmin }, process.env.JWTKEY)
@@ -119,7 +119,7 @@ router.post("/login", async (req, res) => {
     }
 });
 
-// get all users if admin(done need to remove this comment later)
+// get all users if admin
 router.get("/", auth, async (req, res) => {
     try {
         if (!req.payload.isAdmin) return res.status(401).send("Access denied")
@@ -133,7 +133,7 @@ router.get("/", auth, async (req, res) => {
 // get specific user if you are admin or registered user
 router.get("/:id", auth, isAdminOrUser, async (req, res) => {
     try {
-        const user = await User.findById(req.params.id)
+        const user = await User.findById(req.params.id).select("-password");
         if (!user) return res.status(404).send("user not found")
         res.status(200).send(user)
     } catch (error) {
@@ -141,11 +141,11 @@ router.get("/:id", auth, isAdminOrUser, async (req, res) => {
     }
 });
 
-// upadte specifc user(done need to remove this comment later)
+// upadte specifc user
 router.put("/:id", auth, isAdminOrUser, async (req, res) => {
     try {
         // alidate body of the request
-        const { error } = editUserSchema.validate(req.body)
+        const { error } = await editUserSchema.validateAsync(req.body)
         if (error) return res.status(400).send(error.details[0].message)
         // find and update the user
         const user = await User.findOneAndUpdate({ _id: req.params.id }, req.body, { new: true })
@@ -157,7 +157,7 @@ router.put("/:id", auth, isAdminOrUser, async (req, res) => {
     }
 });
 
-// change the is business status(done need to remove this comment later nned t check which method is better to use)
+// change the is business status
 router.patch("/:id", auth, isAdminOrUser, async (req, res) => {
     try {
         // find and patch the user

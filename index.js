@@ -11,15 +11,26 @@ const seedDataBase = require("./seeder")
 const app = express()
 const port = process.env.PORT || 5000;
 
-// changed to morgan but do I need to change the time zone to Israel?? maybe even place it in diffrenet model and import it to the main index
 const logger = morgan(':method :url :status :res[content-lenght] - :response-time ms :date[web]')
 
-mongoose.connect(process.env.DB).then(async () => {
+/* mongoose.connect(process.env.DB).then(async () => {
     console.log("Connetcted to MongoDB server");
     await seedDataBase()
 }).catch((error) => {
     console.log(error);
-});
+}); */
+
+// made this an async function becasue I'm getting a from the seedDataBase a promise
+const connectToDb = async () => {
+    try {
+        await mongoose.connect(process.env.DB);
+        console.log("Connected to MongoDB server");
+        await seedDataBase();
+    } catch (error) {
+        console.log(error);
+    }
+};
+connectToDb();
 
 app.use(cors());
 app.use(express.json());

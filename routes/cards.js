@@ -11,18 +11,18 @@ const cardSchema = Joi.object({
     phone: Joi.string().required().pattern(/^(?:\+972|0)([23489]|5[0123456789])\d{7}$/),
     email: Joi.string().required().min(2).email(),
     web: Joi.string().required().min(10).uri(),
-    image: {
+    image: Joi.object({
         url: Joi.string().uri(),
         alt: Joi.string().min(2).required().max(256)
-    },
-    address: {
+    }),
+    address: Joi.object({
         state: Joi.string().optional().allow(""),
         country: Joi.string().required().min(2),
         city: Joi.string().required().min(2),
         street: Joi.string().required().min(2),
         houseNumber: Joi.number().required().min(2),
         zip: Joi.number().required().min(2),
-    },
+    }),
 })
 
 // get cards
@@ -49,7 +49,7 @@ router.get("/my-cards", auth, async (req, res) => {
     }
 })
 
-// get a specifc card by id(need to see if only admin or all)
+// get a specifc card by id
 router.get("/:id", async (req, res) => {
     try {
         // get card by its id
@@ -67,7 +67,7 @@ router.post("/", auth, async (req, res) => {
         // check if user has business account
         if (!req.payload.isBusiness) return res.status(401).send("Access denied")
         // body validation
-        const { error } = cardSchema.validate(req.body)
+        const { error } = await cardSchema.validateAsync(req.body)
         if (error) return res.status(400).send(error.details[0].message)
         // check for existing card / business
         let card = await Card.findOne({ email: req.body.email })
@@ -90,7 +90,7 @@ router.put("/:id", auth, async (req, res) => {
 
         if (!req.payload.isAdmin && findCard.userId.toString() !== req.payload._id) return res.status(400).send("Access denied. Not authorized")
         // body validation
-        const { error } = cardSchema.validate(req.body)
+        const { error } = await cardSchema.validateAsync(req.body)
         if (error) return res.status(400).send(error.details[0].message)
         // find card and update
         const card = await Card.findOneAndUpdate({ _id: req.params.id }, req.body, { new: true })
