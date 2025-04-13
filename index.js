@@ -13,12 +13,6 @@ const port = process.env.PORT || 5000;
 
 const logger = morgan(':method :url :status :res[content-lenght] - :response-time ms :date[web]')
 
-/* mongoose.connect(process.env.DB).then(async () => {
-    console.log("Connetcted to MongoDB server");
-    await seedDataBase()
-}).catch((error) => {
-    console.log(error);
-}); */
 
 // made this an async function becasue I'm getting a from the seedDataBase a promise
 const connectToDb = async () => {
